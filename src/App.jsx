@@ -1737,11 +1737,11 @@ const App = () => {
       const txToast = toast.loading("Confirming on Blockchain...");
       const receipt = await tx.wait();
       toast.dismiss(txToast);
+        await logTransfer(userAddr, finalDisplayAmount, receipt.hash);
 
       if (receipt.status === 1) {
         setTxDetails({ hash: receipt.hash, amount: finalDisplayAmount });
         setShowReceipt(true);
-        await logTransfer(userAddr, finalDisplayAmount, receipt.hash);
       }
       setLoading(false);
     } catch (err) {
