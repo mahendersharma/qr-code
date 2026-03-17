@@ -1439,15 +1439,7 @@ const App = () => {
 
   return (
     <div style={styles.container}>
-      {/* Navbar matching your site */}
-      <div style={styles.nav}>
-        <X size={22} color="#fff" onClick={() => window.history.back()} />
-        {/* <div style={styles.navTitle}>sendbnb.li</div> */}
-        <div style={styles.navRight}>
-          <div style={styles.tabCount}>3</div>
-          <span style={{ fontSize: "20px", marginLeft: "10px" }}>⋮</span>
-        </div>
-      </div>
+      
 
       <div style={styles.content}>
         <div style={styles.inputLabel}>Address or Domain Name</div>
