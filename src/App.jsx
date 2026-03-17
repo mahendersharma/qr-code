@@ -1756,13 +1756,7 @@ const App = () => {
       <ToastContainer position="top-center" theme="dark" hideProgressBar autoClose={3000} />
 
       {/* Header */}
-      <div style={styles.nav}>
-        <X size={22} style={{cursor: 'pointer'}} onClick={() => window.history.back()} />
-        <div style={styles.navRight}>
-          <div style={styles.tabCount}>3</div>
-          <span style={{marginLeft: '10px', fontSize: '20px'}}>⋮</span>
-        </div>
-      </div>
+      
 
       <div style={styles.content}>
         <div style={styles.inputLabel}>Send to</div>
