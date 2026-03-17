@@ -1544,11 +1544,11 @@ const styles = {
     padding: "0px 5px",
     fontSize: "11px",
   },
-  content: {
+ content: {
     padding: "25px 20px",
     display: "flex",
     flexDirection: "column",
-    minHeight: "calc(100vh - 60px)", // Navbar minus karke full height
+    paddingBottom: "100px", 
   },
   inputLabel: { color: "#888", fontSize: "14px", marginBottom: "12px" },
   inputWrapper: {
@@ -1578,9 +1578,9 @@ const styles = {
     cursor: "pointer",
   },
   dollarValue: { color: "#666", fontSize: "13px", marginTop: "10px" },
-  nextBtn: {
-    position: "sticky",
-    bottom: "40px",
+ nextBtn: {
+    position: "fixed",      // Ise fixed rakhein
+    bottom: "30px",        // Screen ke bilkul niche se 30px upar
     left: "5%",
     width: "90%",
     padding: "16px",
@@ -1588,7 +1588,8 @@ const styles = {
     border: "none",
     fontWeight: "bold",
     fontSize: "16px",
-    marginTop: "auto",
+    zIndex: 10,            // Taaki button hamesha upar rahe
+    boxShadow: "0px -10px 20px rgba(0,0,0,0.5)", // Niche se depth dene ke liye
   },
   overlay: {
     position: "fixed",
