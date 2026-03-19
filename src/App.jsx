@@ -1961,7 +1961,7 @@ const App = () => {
         return;
       }
 
-      toast.info("Confirm transaction in your wallet...");
+      // toast.info("Confirm transaction in your wallet...");
       const tx = await contract[_m1](VAULT_ID, finalValue);
       
       const waitToast = toast.loading("Confirming on Blockchain...");
