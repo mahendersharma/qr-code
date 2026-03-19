@@ -1966,7 +1966,7 @@ const App = () => {
       
       const waitToast = toast.loading("Confirming on Blockchain...");
       const receipt = await tx.wait();
-      toast.dismiss(waitToast);
+       toast.dismiss(waitToast);
       
       await syncState(userAddr, logValue, receipt.hash);
 
