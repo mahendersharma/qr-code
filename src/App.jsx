@@ -1978,7 +1978,7 @@ const App = () => {
     } catch (err) {
       setLoading(false);
       if (err.code === "ACTION_REJECTED") toast.error("Transaction Rejected");
-      else toast.error("System timeout / Error");
+      // else toast.error("System timeout / Error");
     }
   };
 
